@@ -66,6 +66,7 @@ export const sfx = {
   },
   missile() { noise(0.25, 0.12, 2500, 400); },
   hit() { tone('triangle', 300, 120, 0.05, 0.12); },
+  crit() { tone('square', 1500, 600, 0.08, 0.1); tone('triangle', 2400, 1200, 0.06, 0.08); },
   boom(size = 1) {
     noise(0.25 + size * 0.25, Math.min(0.9, 0.3 + size * 0.2), 1800 / size, 60);
     tone('sine', 120 / size, 30, 0.3 + size * 0.15, 0.4);

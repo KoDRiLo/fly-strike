@@ -92,6 +92,15 @@ function explode(x, y, size = 1) {
   S.shake = Math.max(S.shake, Math.min(1.6, size * 0.4));
   sfx.boom(size);
 }
+// Влучання критичної кулі: блакитне кільце й сніп іскор.
+function critHit(x, y) {
+  ring(x, y, 2.6, 0.25, CRIT_COLOR);
+  for (let i = 0; i < 10; i++) {
+    const a = rand(0, TAU), s = rand(6, 16);
+    particle(x, y, 0.5, Math.cos(a) * s, Math.sin(a) * s, 0, rand(0.15, 0.35), 0.5, 1, 1);
+  }
+  sfx.crit();
+}
 function sparks(x, y, r = 1, g = 0.9, b = 0.5) {
   for (let i = 0; i < 3; i++) {
     const a = rand(0, TAU), s = rand(3, 9);
@@ -108,6 +117,9 @@ function spritePool(color, sx, sy) {
 }
 const pBulletPool = spritePool(0xffe37a, 0.8, 1.9);
 const dBulletPool = spritePool(0xff9ac4, 0.6, 1.5);
+// Критичний постріл: більша блакитно-біла куля — її видно ще в польоті.
+const CRIT_COLOR = 0x7dfcff;
+const critBulletPool = spritePool(CRIT_COLOR, 1.3, 2.9);
 // Кулі ворогів: однотонний кружок із тонким темнішим обідком того ж кольору.
 const eBulletPools = ['#d11f00', '#c2009a'].map((color) => {
   const mat = new THREE.SpriteMaterial({ map: orbTexture(color), depthWrite: false });
@@ -127,6 +139,6 @@ function sweep(arr, onDead) {
 }
 
 export {
-  dBulletPool, eBulletPools, explode, glowTex, missilePool, particle, pBulletPool, Pool, ring, sparks, sweep,
+  critBulletPool, critHit, dBulletPool, eBulletPools, explode, glowTex, missilePool, particle, pBulletPool, Pool, ring, sparks, sweep,
   updateParticles, updateRings,
 };

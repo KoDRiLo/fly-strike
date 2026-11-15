@@ -31,7 +31,9 @@ function eShoot(x, y, ang, speed, kind = 0, dmg = shotDmg(false)) {
   const pool = eBulletPools[kind];
   const m = pool.get();
   m.scale.setScalar(dmg > shotDmg(false) ? 1.8 : 1.2);
-  eBullets.push({ x, y, vx: Math.cos(ang) * speed, vy: Math.sin(ang) * speed, dmg, m, pool });
+  const o = { x, y, vx: Math.cos(ang) * speed, vy: Math.sin(ang) * speed, dmg, m, pool };
+  eBullets.push(o);
+  return o; // атака може додати кулі ay (прискорення) чи home (час самонаведення)
 }
 
 const auraMat = new THREE.SpriteMaterial({ map: glowTex, color: 0xffc21a, blending: THREE.AdditiveBlending, depthWrite: false });

@@ -314,6 +314,60 @@ export function makeBoss(kind) {
     }
     return g;
   }
+  if (kind === 6) {
+    // Бойовий дирижабль
+    const hull = M(0x8c3b2e), band = M(0xe8dcc0), fin = M(0x5a241c), trim = M(0xffc23d, { emissive: 0x7a5200 });
+    g.add(canopy(hull, 3.0, 6.5, 2.2));
+    for (const y of [2.2, -1.6]) g.add(at(canopy(band, 3.06, 0.45, 2.26), 0, y, 0));
+    g.add(at(plate([[0, -4.0], [3.6, -6.0], [3.6, -7.2], [0, -6.4]], 0.3, fin)));
+    g.add(at(box(0.25, 2.6, 2.4, fin), 0, -5.8, 1.2));
+    for (const s of [-1, 1]) {
+      g.add(at(box(1.6, 0.3, 0.25, fin), s * 3.4, -0.4, -0.2));
+      g.add(at(cyl(0.55, 0.65, 2.4, fin), s * 4.2, -0.4, -0.2));
+      g.add(at(prop(2.4, d), s * 4.2, 0.9, -0.2));
+    }
+    for (const y of [3.0, 0.3, -2.6]) {
+      g.add(at(cyl(0.7, 0.7, 0.5, d, 10).rotateX(Math.PI / 2), 0, y, 2.1));
+      g.add(at(cyl(0.14, 0.14, 1.4, d, 6), 0, y + 0.9, 2.2));
+    }
+    g.add(at(canopy(trim, 0.7, 1.0, 0.4), 0, 5.2, 1.0));
+    return g;
+  }
+  if (kind === 7) {
+    // Літак-невидимка: пласке крило з ламаною задньою кромкою
+    const body = M(0x1b1f2a), hull = M(0x2a3142), trim = M(0x4ff3ff, { emissive: 0x18a8b8 });
+    g.add(plate([[0, 3.6], [8.4, -1.6], [7.4, -2.6], [5.2, -1.4], [3.4, -3.0], [1.7, -1.6], [0, -3.2]], 0.45, body));
+    g.add(at(plate([[0, 3.0], [1.6, 0.6], [1.2, -2.0], [0, -2.6]], 0.5, hull), 0, 0, 0.4));
+    for (const s of [-1, 1]) {
+      const edge = at(box(5.6, 0.16, 0.2, trim), s * 4.7, 0.6, 0.3);
+      edge.rotation.z = -s * 0.555;
+      g.add(edge);
+      g.add(at(box(0.9, 0.5, 0.3, hull), s * 2.6, -0.6, 0.45));
+      g.add(at(flame(0.45, 1.8, 0x7df6ff), s * 1.7, -2.5, 0.1));
+    }
+    g.add(at(canopy(trim, 0.5, 1.2, 0.35), 0, 1.4, 0.8));
+    return g;
+  }
+  if (kind === 8) {
+    // Важкий крейсер з «молотом» у носі
+    const hull = M(0x394867), deck = M(0x27324a), trim = M(0xffc23d, { emissive: 0x7a5200 });
+    g.add(plate([[0, 6.0], [1.6, 5.2], [1.9, -5.0], [1.2, -6.0], [0, -6.0]], 1.0, hull));
+    g.add(at(box(9.4, 1.8, 0.9, deck), 0, 4.0, 0.1));
+    g.add(at(plate([[0, -2.2], [4.4, -3.0], [4.4, -5.0], [0, -5.2]], 0.35, deck)));
+    for (const s of [-1, 1]) {
+      g.add(at(cyl(0.9, 0.9, 2.2, hull, 8), s * 4.8, 4.0, 0.1));
+      g.add(at(box(0.5, 1.4, 0.3, trim), s * 4.8, 4.2, 0.7));
+      g.add(at(cyl(0.7, 0.8, 3.0, hull), s * 2.9, -3.8, 0));
+      g.add(at(flame(0.7, 2.4, 0xffd04a), s * 2.9, -6.3, 0));
+    }
+    for (const y of [2.2, 0.2]) {
+      g.add(at(cyl(0.75, 0.75, 0.5, d, 10).rotateX(Math.PI / 2), 0, y, 0.75));
+      g.add(at(cyl(0.15, 0.15, 1.6, d, 6), 0, y + 1.0, 0.85));
+    }
+    g.add(at(box(1.5, 2.2, 1.2, deck), 0, -2.0, 1.1));
+    g.add(at(box(1.0, 0.7, 0.5, trim), 0, -1.5, 1.9));
+    return g;
+  }
   if (kind === 0) {
     // Важкий чотиримоторний бомбардувальник
     const hull = M(0x5b6b4a), wing = M(0x3f4c33), trim = M(0xc0392b);

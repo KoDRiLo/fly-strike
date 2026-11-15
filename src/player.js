@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { makeDrone, makePlayer } from './models.js';
 import { sfx } from './audio.js';
 import { clamp, H, rand, scene, TAU, W } from './core.js';
-import { dBulletPool, explode, glowTex, missilePool, particle, pBulletPool, ring } from './fx.js';
+import { critBulletPool, dBulletPool, explode, glowTex, missilePool, particle, pBulletPool, ring } from './fx.js';
 import { eBullets, enemies, missiles, P, pBullets, S } from './state.js';
 import { screenFlash } from './hud.js';
 import { damageEnemy, quietly } from './enemies.js';
@@ -29,6 +29,7 @@ const drones = [-1, 1, -2, 2].map((side) => {
   return { m, side, x: 0, y: 0 };
 });
 
+const FIRE_GAP = 8 / 60, DRONE_GAP = 15 / 60; // базова пауза між пострілами гармати й дронів, с (7,5 і 4 залпи за секунду)
 const SPEED = 27; // базова швидкість літака, світових одиниць за секунду
 
 function hurtPlayer(dmg) {
@@ -108,8 +109,11 @@ function updateShock(dt) {
   }
 }
 
+// Крит визначається в момент пострілу: така куля б'є втричі сильніше й виглядає інакше.
 function pShoot(x, y, vx, vy, dmg = P.dmg, pool = pBulletPool) {
-  pBullets.push({ x, y, vx, vy, dmg: dmg * (Math.random() < P.crit ? 3 : 1), pierce: P.pierce, bounce: P.bounce, hit: null, m: pool.get(), pool });
+  const crit = Math.random() < P.crit;
+  if (crit) pool = critBulletPool;
+  pBullets.push({ x, y, vx, vy, dmg: dmg * (crit ? 3 : 1), crit, pierce: P.pierce, bounce: P.bounce, hit: null, m: pool.get(), pool });
 }
 const GUN = [
   [[0, 0]],
@@ -179,8 +183,10 @@ function updatePlayer(dt) {
   if (P.regen) P.hp = Math.min(P.maxHp, P.hp + P.regen * dt);
   if (P.shield < P.shieldMax && (P.shieldT -= dt) <= 0) { P.shield++; P.shieldT = SHIELD_RECHARGE; ring(P.x, P.y, 4, 0.3, 0x4fd8ff); }
 
+  // Залишок таймера переноситься на наступний постріл, тож кожен рівень скорострільності дає рівно свої відсотки.
+  // Темп залежить лише від перка «Скорострільність», а не від кількості стволів.
   if ((P.fireT -= dt) <= 0) {
-    P.fireT = (P.gun >= 4 ? 0.1 : 0.12) / P.rate;
+    P.fireT = Math.max(0, P.fireT + FIRE_GAP / P.rate);
     for (const [dx, a] of GUN[P.gun - 1]) pShoot(P.x + dx, P.y + 1.8, Math.sin(a) * 48, Math.cos(a) * 48);
     sfx.shoot();
   }
@@ -195,7 +201,7 @@ function updatePlayer(dt) {
     sfx.missile();
   }
   const fireDrones = P.drones > 0 && (P.droneT -= dt) <= 0;
-  if (fireDrones) P.droneT = 0.24 / P.rate;
+  if (fireDrones) P.droneT = Math.max(0, P.droneT + DRONE_GAP / P.rate);
   drones.forEach((d, i) => {
     d.m.visible = i < P.drones;
     if (!d.m.visible) return;

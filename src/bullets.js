@@ -1,6 +1,6 @@
 import { sfx } from './audio.js';
 import { clamp, H, rand, W } from './core.js';
-import { explode, missilePool, particle, sparks, sweep } from './fx.js';
+import { critHit, explode, missilePool, particle, sparks, sweep } from './fx.js';
 import { eBullets, enemies, missiles, P, pBullets } from './state.js';
 import { damageEnemy } from './enemies.js';
 import { boss, damageBoss } from './bosses.js';
@@ -34,7 +34,7 @@ function updateBullets(dt) {
     const t = hitTest(b.x, b.y, 0.35, b.hit);
     if (t) {
       applyHit(t, b.dmg);
-      sparks(b.x, b.y);
+      if (b.crit) critHit(b.x, b.y); else sparks(b.x, b.y);
       if (b.pierce-- > 0) (b.hit ||= []).push(t); else { b.dead = true; continue; }
     }
     b.m.position.set(b.x, b.y, 0);
@@ -62,6 +62,15 @@ function updateBullets(dt) {
 
   for (const b of eBullets) {
     if (b.dead) continue;
+    if (b.ay) b.vy += b.ay * dt;                       // «бумеранг»: гальмує й повертається
+    if (b.home > 0 && !P.dead) {                       // самонаведення: плавно довертає на гравця
+      b.home -= dt;
+      const v = Math.hypot(b.vx, b.vy), a = Math.atan2(b.vy, b.vx);
+      let d = Math.atan2(P.y - b.y, P.x - b.x) - a;
+      d = Math.atan2(Math.sin(d), Math.cos(d));
+      const na = a + clamp(d, -1.5 * dt, 1.5 * dt);
+      b.vx = Math.cos(na) * v; b.vy = Math.sin(na) * v;
+    }
     b.x += b.vx * dt; b.y += b.vy * dt;
     if (Math.abs(b.y) > H + 2 || Math.abs(b.x) > W + 2) { b.dead = true; continue; }
     b.m.position.set(b.x, b.y, 0.2);

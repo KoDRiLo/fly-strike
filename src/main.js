@@ -1,10 +1,10 @@
 import { initAudio, sfx } from './audio.js';
 import { $, camera, canvas, clamp, H, rand, renderer, scene, updateBackground, W, world } from './core.js';
 import { sweep, updateParticles, updateRings } from './fx.js';
-import { enemies, hi, P, pickups, queue, S, threat } from './state.js';
+import { enemies, hi, P, pBullets, pickups, queue, S, threat } from './state.js';
 import { showMsg, ui, updateHud } from './hud.js';
 import { spawnElite, spawnEnemy, updateEnemies, WAVES } from './enemies.js';
-import { boss, spawnBoss, updateBoss } from './bosses.js';
+import { ATK, boss, BOSSES, spawnBoss, updateBoss } from './bosses.js';
 import { dropStars, gainXp, updatePickups } from './pickups.js';
 import { hurtPlayer, input, playerFlame, playerHolder, playerModel, shieldMesh, shockPlayer, updatePlayer, useBomb } from './player.js';
 import { updateBullets } from './bullets.js';
@@ -121,4 +121,4 @@ function frame(now) {
 requestAnimationFrame(frame);
 
 // Для налагодження з консолі
-if (DEBUG) window.__game = { S, P, enemies, pickups, pickQueue, hurtPlayer, shockPlayer, spawnEnemy, spawnElite, WAVES, dropStars, gainXp, choosePerk, get boss() { return boss; }, spawnBoss, startStage, world };
+if (DEBUG) window.__game = { S, P, enemies, pickups, pickQueue, hurtPlayer, shockPlayer, spawnEnemy, spawnElite, WAVES, dropStars, gainXp, choosePerk, get boss() { return boss; }, spawnBoss, startStage, world, ATK, BOSSES, pBullets };
