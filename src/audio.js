@@ -31,20 +31,20 @@ export function setVolume(kind, v) {
   applyVolume();
 }
 
-function tone(type, f0, f1, dur, vol, delay = 0) {
+function tone(type, f0, f1, dur, gain, delay = 0) {
   if (!ctx || vol.sfx === 0) return;
   const t = ctx.currentTime + delay;
   const o = ctx.createOscillator(), g = ctx.createGain();
   o.type = type;
   o.frequency.setValueAtTime(f0, t);
   o.frequency.exponentialRampToValueAtTime(Math.max(1, f1), t + dur);
-  g.gain.setValueAtTime(vol, t);
+  g.gain.setValueAtTime(gain, t);
   g.gain.exponentialRampToValueAtTime(0.001, t + dur);
   o.connect(g).connect(sfxGain);
   o.start(t); o.stop(t + dur + 0.02);
 }
 
-function noise(dur, vol, f0, f1) {
+function noise(dur, gain, f0, f1) {
   if (!ctx || vol.sfx === 0) return;
   const t = ctx.currentTime;
   const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
@@ -52,7 +52,7 @@ function noise(dur, vol, f0, f1) {
   f.type = 'lowpass';
   f.frequency.setValueAtTime(f0, t);
   f.frequency.exponentialRampToValueAtTime(f1, t + dur);
-  g.gain.setValueAtTime(vol, t);
+  g.gain.setValueAtTime(gain, t);
   g.gain.exponentialRampToValueAtTime(0.001, t + dur);
   s.connect(f).connect(g).connect(sfxGain);
   s.start(t, Math.random()); s.stop(t + dur + 0.02);
