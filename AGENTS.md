@@ -15,9 +15,10 @@ npm install        # лише для лінтера; самій грі зале�
 npm start          # локальний сервер: http://localhost:8000
 npm run lint       # ESLint
 npm test           # тести чистої логіки (node --test)
+npm run smoke      # димовий тест у headless Chrome: боси, перки, зброя, кінець гри
 ```
 
-Через `file://` гра не запуститься: модулі та import map потребують HTTP. Кроку збирання немає — після зміни файлу достатньо оновити сторінку. Перед комітом мають проходити `npm run lint` і `npm test`.
+Через `file://` гра не запуститься: модулі та import map потребують HTTP. Кроку збирання немає — після зміни файлу достатньо оновити сторінку. Перед комітом мають проходити `npm run lint`, `npm test` і `npm run smoke` (останній потребує Chrome або Chromium; шлях можна задати змінною `CHROME`).
 
 Режим налагодження: додайте `?debug` до адреси — з'явиться лічильник FPS і об'єкт `window.__game` (стан, гравець, функції появи ворогів і босів) для експериментів із консолі.
 
@@ -30,7 +31,8 @@ npm test           # тести чистої логіки (node --test)
 │   ├── main.js           точка входу: керування, головний цикл, режим ?debug
 │   ├── core.js           рендерер, сцена, камера, розміри поля, дрібні утиліти
 │   ├── state.js          стан сесії S, гравець P, масиви об'єктів, формули складності
-│   ├── balance.js        чисті формули балансу (без DOM і Three.js)
+│   ├── balance.js        чисті формули та константи балансу (без DOM і Three.js)
+│   ├── config.js         типові налаштування та перевірка збережених (чистий модуль)
 │   ├── fx.js             частинки, кільця, вибухи, пули об'єктів
 │   ├── hud.js            HUD: рахунок, смуги, повідомлення, спалах екрана
 │   ├── enemies.js        типи ворогів, хвилі, елітні, поведінка
@@ -38,6 +40,7 @@ npm test           # тести чистої логіки (node --test)
 │   ├── pickups.js        зірки досвіду, рівні
 │   ├── player.js         літак, дрони, зброя, бомба, ураження струмом
 │   ├── weapons.js        додаткова зброя з перків: лазер, ланцюгова блискавка, вогняні сфери
+│   ├── targets.js        цілі для зброї гравця: влучання, найближча ціль, завдання шкоди
 │   ├── bullets.js        рух і влучання куль та ракет
 │   ├── stage.js          фази етапу: хвилі → попередження → бос → нагорода
 │   ├── perks.js          список перків і вибір трьох (чистий модуль)
@@ -47,7 +50,9 @@ npm test           # тести чистої логіки (node --test)
 │   ├── models.js         моделі літаків, ворогів, босів; процедурні текстури
 │   ├── world.js          біоми та прокручуваний ландшафт
 │   └── audio.js          звукові ефекти та музика на Web Audio
-├── test/                 тести для balance.js і perks.js
+├── test/                 тести для balance.js, perks.js і config.js
+├── tools/
+│   └── smoke.mjs         димовий тест у браузері (npm run smoke)
 ├── vendor/
 │   └── three.module.js   Three.js r170, мініфікований — не редагувати
 ├── eslint.config.js      налаштування лінтера
@@ -61,9 +66,9 @@ npm test           # тести чистої логіки (node --test)
 ## Як модулі пов'язані
 
 - Назва `three` розв'язується через import map в `index.html` на `./vendor/three.module.js`.
-- `balance.js`, `perks.js` і `audio.js` не залежать від DOM-розмітки гри та Three.js; перші два можна імпортувати в Node — на них і написані тести.
+- `balance.js`, `perks.js`, `config.js` і `audio.js` не залежать від DOM-розмітки гри та Three.js; перші три можна імпортувати в Node — на них і написані тести.
 - `core.js` → `state.js` → `fx.js` — основа без циклів; їх можна вільно використовувати на верхньому рівні модуля.
-- Ігрові модулі (`enemies`, `bosses`, `player`, `pickups`, `bullets`, `stage`, `perkui`, `game`, `hud`) імпортують один одного по колу. Це працює, бо імпортоване використовується лише всередині функцій. **Не звертайтеся до імпорту з ігрового модуля на верхньому рівні іншого ігрового модуля** — отримаєте помилку ініціалізації.
+- Ігрові модулі (`enemies`, `bosses`, `player`, `targets`, `weapons`, `pickups`, `bullets`, `stage`, `perkui`, `settings`, `game`, `hud`) імпортують один одного по колу. Це працює, бо імпортоване використовується лише всередині функцій. **Не звертайтеся до імпорту з ігрового модуля на верхньому рівні іншого ігрового модуля** — отримаєте помилку ініціалізації.
 - Імпортовані змінні доступні лише для читання. Стан, який змінюється ззовні, має функцію-сеттер у своєму модулі: `setHi()` у `state.js`, `clearBoss()` у `bosses.js`, `quietly()` в `enemies.js`. Ширина поля `W` змінюється лише в `core.js` (`resize`).
 - Експорти кожного модуля зібрані в одному блоці `export { … }` наприкінці файлу.
 
@@ -79,7 +84,7 @@ npm test           # тести чистої логіки (node --test)
 
 | Модуль | Що всередині |
 | --- | --- |
-| `core.js` | `renderer`, `scene`, `camera`, `world`; розміри поля `H` (пів-висоти) і `W` (пів-ширини); `$`, `rand`, `clamp`, `TAU` |
+| `core.js` | `renderer`, `scene`, `camera`, `world`; розміри поля `H` (пів-висоти) і `W` (пів-ширини); `$`, `rand`, `clamp`, `turnToward`, `TAU` |
 | `state.js` | `S` — стан сесії, `P` — гравець (`freshPlayer()`), масиви `enemies`, `pBullets`, `eBullets`, `missiles`, `pickups`; `later()` — відкладені дії; `threat()`, `diff()`, `threatDmg()`, `xpNeed()` |
 | `balance.js` | `threatLevel`, `hpMul`, `dmgMul`, `xpForLevel`, `bossHp`, `starRarity`, `weightedPick` |
 | `fx.js` | клас `Pool`, `particle()`, `explode()`, `sparks()`, `ring()`, пули куль і ракет, `sweep()` |
@@ -89,11 +94,13 @@ npm test           # тести чистої логіки (node --test)
 | `pickups.js` | `STARS` (рідкості), `dropStars()`, `gainXp()`, `updatePickups()` |
 | `player.js` | `input`, `SPEED`, `hurtPlayer()`, `shockPlayer()`, `GUN`, `useBomb()`, `updatePlayer()`, моделі літака й дронів |
 | `weapons.js` | `updateWeapons()`: лазер (`LASER`), ланцюгова блискавка (`CHAIN`), вогняні сфери (`ORB`) — параметри в однойменних таблицях |
-| `bullets.js` | `hitTest()`, `updateBullets()` |
+| `targets.js` | `hitTest()`, `nearestTarget()`, `liveTargets()`, `damage()` — єдине місце, де визначається, у кого можна влучити |
+| `bullets.js` | `updateBullets()`: кулі гравця, ракети, ворожі кулі (зокрема з прискоренням і самонаведенням) |
 | `stage.js` | `updateStage()` (фази `waves` → `warn` → `boss` → `clear` → `reward`), `startStage()` |
 | `perks.js` | `PERKS`, `CATS`, `rollPerks(P)` |
 | `perkui.js` | `pickQueue`, `openPick()`, `choosePerk()`, `toggleInfo()` |
-| `settings.js` | `cfg`, `COLORS`, `applyCfg()`, `toggleSettings()`, `preview()` |
+| `config.js` | `DEFAULT_CFG`, `sanitizeCfg()` |
+| `settings.js` | `cfg`, `COLORS`, `applyCfg()`, `toggleSettings()`, `toggleSound()`, `preview()` |
 | `game.js` | `startGame()`, `gameOver()`, `togglePause()`, `clearAll()` |
 | `main.js` | обробники клавіатури й дотику, `frame(now)` через `requestAnimationFrame` |
 
@@ -105,7 +112,7 @@ npm test           # тести чистої логіки (node --test)
 - **Нова додаткова зброя** — поля у `freshPlayer()` (`state.js`), базовий перк середньої рідкості (`max: 1`) і покращення з `ok(P)` у `PERKS`, логіка й візуал у `weapons.js` (функція `update…(dt, on)`, виклик з `updateWeapons()`).
 - **Новий ворог** — модель у `BUILD` (`models.js`), характеристики в `DEF`, поведінка в `updateEnemies()`, поява у `WAVES` (усе в `enemies.js`).
 - **Новий бос або атака** — `BOSSES` і `ATK` у `bosses.js`, модель у `makeBoss()` (`models.js`). У кожного боса щонайменше три атаки, і жодна атака не повторюється в іншого боса.
-- **Баланс** — формули в `balance.js`, `STAGE_LEN` у `state.js`, `ELITE` і `DEF` в `enemies.js`.
+- **Баланс** — формули й спільні константи (`BASE_MAGNET`, `SHIELD_RECHARGE`) в `balance.js`, `STAGE_LEN` у `state.js`, `ELITE` і `DEF` в `enemies.js`.
 
 ## src/models.js
 
@@ -140,5 +147,8 @@ npm test           # тести чистої логіки (node --test)
 - Жодних зовнішніх ресурсів і залежностей у самій грі: нову графіку чи звук робити процедурно.
 - Продуктивність важлива: усе, що часто з'являється (кулі, частинки, ракети, кільця, зірки, моделі ворогів), береться з пулів — не створювати меші в головному циклі.
 - Стиль коду компактний: короткі імена для глобального стану (`S`, `P`), таблиці даних замість класів.
+- Моделі босів кешуються в `bossModels` (`bosses.js`) і використовуються повторно; моделі ворогів — у пулах. Не створюйте нові геометрії під час гри без `dispose()`.
+- Усе, що читається з `localStorage`, проходить перевірку (`sanitizeCfg`), перш ніж потрапити в гру.
+- Звук на паузі: `audioPause(true)` виставляє прапорець, і `initAudio()` не відновлює звук від випадкового кліку.
 - Шкода ворожої кулі передається аргументом у `eShoot()`, а не через спільну змінну.
 - Критичний постріл визначається в `pShoot()` (`player.js`) у момент пострілу: куля береться з `critBulletPool`, а влучання показує `critHit()` (`fx.js`).

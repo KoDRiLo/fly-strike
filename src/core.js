@@ -10,6 +10,8 @@ const TAU = Math.PI * 2;
 const rand = (a, b) => a + Math.random() * (b - a);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const $ = (id) => document.getElementById(id);
+// Кут a, довернутий до кута target найкоротшим шляхом, але не більше ніж на maxStep.
+const turnToward = (a, target, maxStep) => a + clamp(Math.atan2(Math.sin(target - a), Math.cos(target - a)), -maxStep, maxStep);
 
 const gameEl = $('game');
 const canvas = $('c');
@@ -48,5 +50,5 @@ function updateBackground(dt) {
 }
 
 export {
-  $, camera, canvas, clamp, H, rand, renderer, scene, TAU, updateBackground, W, world,
+  $, camera, canvas, clamp, H, rand, renderer, scene, TAU, turnToward, updateBackground, W, world,
 };

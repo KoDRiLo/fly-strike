@@ -41,7 +41,7 @@ python3 -m http.server 8000
 
 Після цього відкрийте <http://localhost:8000> у браузері. Підійде будь-який статичний сервер (наприклад, `npx serve`).
 
-Для розробки: `npm install`, далі `npm run lint` і `npm test`. Адреса з `?debug` показує лічильник FPS і відкриває стан гри в консолі.
+Для розробки: `npm install`, далі `npm run lint`, `npm test` і `npm run smoke` (димовий тест у headless Chrome). Адреса з `?debug` показує лічильник FPS і відкриває стан гри в консолі.
 
 Потрібен сучасний браузер із підтримкою WebGL, import maps і Web Audio.
 

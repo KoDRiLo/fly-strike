@@ -1,10 +1,8 @@
-import { weightedPick } from './balance.js';
+import { BASE_MAGNET, SHIELD_RECHARGE, weightedPick } from './balance.js';
 
 // ───────────────────────── Роглайк-перки ─────────────────────────
 // Єдине джерело покращень: нові рівні (зірки) та боси.
 const CATS = { atk: 'АТАКА', def: 'ЗАХИСТ', util: 'ПІДТРИМКА' };
-const MAGNET = 7; // базовий радіус притягування зірок (як у freshPlayer)
-const SHIELD_RECHARGE = 20; // секунд на відновлення одного заряду щита
 const MID = 0.5; // вага перків середньої рідкості (звичайні — 1, рідкісні — 0,2–0,25)
 const PERKS = [
   { id: 'gun', cat: 'atk', icon: '🔫', name: 'Гармата', desc: '+1 ствол: більше куль за постріл', max: 4, apply(P) { P.gun++; } },
@@ -38,7 +36,7 @@ const PERKS = [
   { id: 'life', cat: 'def', icon: '✈️', name: 'Запасний літак', desc: '+1 життя: після загибелі літак повертається в бій', max: 2, w: 0.2, rare: true, apply(P) { P.lives++; } },
   { id: 'bomb', cat: 'util', icon: '💣', name: 'Бомбовий відсік', desc: '+1 до запасу бомб і повне поповнення', max: 4, apply(P) { P.maxBombs++; P.bombs = P.maxBombs; } },
   { id: 'spd', cat: 'util', icon: '🚀', name: 'Форсаж', desc: '+5% швидкості літака', max: 99, apply(P) { P.spd += 0.05; } },
-  { id: 'magnet', cat: 'util', icon: '🧲', name: 'Магніт', desc: '+10% радіуса притягування зірок', max: 99, apply(P) { P.magnet += MAGNET * 0.1; } },
+  { id: 'magnet', cat: 'util', icon: '🧲', name: 'Магніт', desc: '+10% радіуса притягування зірок', max: 99, apply(P) { P.magnet += BASE_MAGNET * 0.1; } },
   { id: 'luck', cat: 'util', icon: '🍀', name: 'Удача', desc: 'Частіше випадають рідкісні зірки', max: 3, apply(P) { P.luck++; } },
   { id: 'xp', cat: 'util', icon: '📘', name: 'Навчання', desc: '+20% досвіду із зірок', max: 3, apply(P) { P.xpMul += 0.2; } },
 ];
@@ -49,5 +47,5 @@ function rollPerks(P, rng = Math.random) {
 }
 
 export {
-  CATS, PERKS, rollPerks, SHIELD_RECHARGE,
+  CATS, PERKS, rollPerks,
 };

@@ -4,15 +4,19 @@ import { audioPause, initAudio, music, setVolume, sfx } from './audio.js';
 import { $, rand } from './core.js';
 import { dBulletPool } from './fx.js';
 import { S } from './state.js';
+import { sanitizeCfg } from './config.js';
+import { showMsg } from './hud.js';
 
 // ───────────────────────── Налаштування звуку ─────────────────────────
-const cfg = { mus: 70, sfx: 80, musOn: true, sfxOn: true, color: 0 };
-try { Object.assign(cfg, JSON.parse(localStorage.getItem('skystorm_cfg')) || {}); } catch {}
 // Кольори, що не трапляються в ландшафтах (без синього, зеленого, пісочного, сірого).
 const COLORS = [
   [0xff7a00, 'помаранчевий'], [0xff1f7a, 'малиновий'], [0xe6252a, 'червоний'], [0x9b3dff, 'фіолетовий'],
   [0xff3df0, 'фуксія'], [0x00e0d0, 'бірюзовий'], [0xffe000, 'жовтий'], [0xa6ff00, 'лаймовий'],
 ];
+// Збережене в браузері може бути зіпсованим — беремо з нього лише коректні значення.
+let saved = null;
+try { saved = JSON.parse(localStorage.getItem('skystorm_cfg')); } catch {}
+const cfg = sanitizeCfg(saved, COLORS.length);
 $('heroCol').innerHTML = COLORS.map(([c, name], i) => `<button class="sw" data-i="${i}" title="${name}" style="background:#${c.toString(16).padStart(6, '0')}"></button>`).join('');
 $('heroCol').addEventListener('click', (e) => { if (e.target.dataset.i) { cfg.color = +e.target.dataset.i; applyCfg(); } });
 
@@ -42,7 +46,6 @@ const preview = (() => {
 function applyCfg() {
   setVolume('music', cfg.musOn ? cfg.mus / 100 : 0);
   setVolume('sfx', cfg.sfxOn ? cfg.sfx / 100 : 0);
-  if (!COLORS[cfg.color]) cfg.color = 0;
   const [hex, name] = COLORS[cfg.color];
   setHeroColors(hex, hex);
   dBulletPool.mat.color.setHex(hex).lerp(new THREE.Color(0xffffff), 0.45);
@@ -63,7 +66,7 @@ $('sfxVol').addEventListener('input', (e) => { cfg.sfx = +e.target.value; applyC
 $('sfxVol').addEventListener('change', () => sfx.power()); // проба гучності
 const toggleSettings = (show) => {
   $('settings').classList.toggle('hidden', !show);
-  if (show) { initAudio(); music.preview(S.mode === 'menu' || S.mode === 'over'); } else if (S.mode === 'menu' || S.mode === 'over') music.stop();
+  if (show) { if (S.mode === 'pause') audioPause(false); initAudio(); music.preview(S.mode === 'menu' || S.mode === 'over'); } else if (S.mode === 'menu' || S.mode === 'over') music.stop();
   if (!show && S.mode === 'pause') audioPause(true);
 };
 $('setBtn').addEventListener('click', () => toggleSettings(true));
@@ -71,6 +74,14 @@ $('setBtn2').addEventListener('click', () => toggleSettings(true));
 $('setBack').addEventListener('click', () => toggleSettings(false));
 applyCfg();
 
+// Вимикає або вмикає весь звук одразу (клавіша M і кнопка в HUD).
+function toggleSound() {
+  const on = !(cfg.musOn || cfg.sfxOn);
+  cfg.musOn = cfg.sfxOn = on;
+  applyCfg();
+  showMsg(on ? 'ЗВУК УВІМК.' : 'ЗВУК ВИМК.', 0.8, 'sm');
+}
+
 export {
-  applyCfg, cfg, preview, toggleSettings,
+  preview, toggleSettings, toggleSound,
 };

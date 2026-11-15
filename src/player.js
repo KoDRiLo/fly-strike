@@ -1,5 +1,5 @@
-import { SHIELD_RECHARGE } from './perks.js';
 import * as THREE from 'three';
+import { SHIELD_RECHARGE } from './balance.js';
 import { makeDrone, makePlayer } from './models.js';
 import { sfx } from './audio.js';
 import { clamp, H, rand, scene, TAU, W } from './core.js';
@@ -7,7 +7,7 @@ import { critBulletPool, dBulletPool, explode, glowTex, missilePool, particle, p
 import { eBullets, enemies, missiles, P, pBullets, S } from './state.js';
 import { screenFlash } from './hud.js';
 import { damageEnemy, quietly } from './enemies.js';
-import { boss, damageBoss } from './bosses.js';
+import { damageBoss } from './bosses.js';
 import { gameOver } from './game.js';
 
 // ───────────────────────── Гравець ─────────────────────────
@@ -122,17 +122,6 @@ const GUN = [
   [[-0.4, 0], [0.4, 0], [-1.0, -0.16], [1.0, 0.16]],
   [[0, 0], [-0.6, -0.08], [0.6, 0.08], [-1.2, -0.22], [1.2, 0.22]],
 ];
-function nearestTarget(x, y) {
-  let best = null, bd = 1e9;
-  for (const e of enemies) {
-    if (e.dead || e.y > H) continue;
-    const d = (e.x - x) ** 2 + (e.y - y) ** 2;
-    if (d < bd) { bd = d; best = e; }
-  }
-  if (!best && boss && boss.state === 'fight') best = boss;
-  return best;
-}
-
 function useBomb() {
   if (S.mode !== 'play' || P.dead || P.bombs <= 0) return;
   P.bombs--;
@@ -229,6 +218,6 @@ function updatePlayer(dt) {
 }
 
 export {
-  drones, hurtPlayer, input, nearestTarget, playerFlame, playerHolder, playerModel, shieldMesh, shockPlayer,
+  drones, hurtPlayer, input, playerFlame, playerHolder, playerModel, shieldMesh, shockPlayer,
   updatePlayer, useBomb,
 };

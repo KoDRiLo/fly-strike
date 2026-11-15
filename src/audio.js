@@ -1,8 +1,9 @@
 // Процедурні звуки на WebAudio — без жодних файлів.
 let ctx = null, master = null, sfxGain = null, noiseBuf = null, lastShot = 0, lastStar = 0;
+let paused = false; // гра на паузі або вкладка прихована — звук не відновлюється від випадкового кліку
 
 export function initAudio() {
-  if (ctx) { ctx.resume(); return; }
+  if (ctx) { if (!paused) ctx.resume(); return; }
   const AC = window.AudioContext || window.webkitAudioContext;
   if (!AC) return;
   ctx = new AC();
@@ -163,6 +164,7 @@ export const music = {
   // у налаштуваннях з меню: вмикає музику, щоб було чути повзунок
   preview(idle) { if (idle && !mTimer) this.start('stage'); },
 };
-export function audioPause(paused) {
-  if (ctx) paused ? ctx.suspend() : ctx.resume();
+export function audioPause(on) {
+  paused = on;
+  if (ctx) on ? ctx.suspend() : ctx.resume();
 }

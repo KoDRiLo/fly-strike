@@ -2,20 +2,11 @@ import * as THREE from 'three';
 import { sfx } from './audio.js';
 import { H, rand, scene, TAU } from './core.js';
 import { glowTex, particle, sparks } from './fx.js';
-import { enemies, P, S } from './state.js';
-import { damageEnemy } from './enemies.js';
-import { boss, damageBoss } from './bosses.js';
-import { hitTest } from './bullets.js';
+import { P, S } from './state.js';
+import { damage, hitTest, liveTargets } from './targets.js';
 
 // ───────────────────────── Додаткова зброя (відкривається перками) ─────────────────────────
 const additive = (color) => ({ color, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
-const hit = (t, dmg) => (t === boss ? damageBoss(dmg) : damageEnemy(t, dmg));
-// усі цілі на екрані: живі вороги та бос у бою
-function targets() {
-  const out = enemies.filter((e) => !e.dead && e.y <= H + 1);
-  if (boss && boss.state === 'fight') out.push(boss);
-  return out;
-}
 
 // Лазер: раз на кілька секунд промінь пробиває всіх ворогів у стовпі перед літаком.
 // Перки змінюють множники гравця: laserDmg (шкода), laserTime (тривалість), laserCd (перезарядка).
@@ -36,10 +27,10 @@ function updateLaser(dt, on) {
   P.laserOn -= dt;
   if ((P.laserTick -= dt) <= 0) {
     P.laserTick = LASER.tick;
-    for (const t of targets()) {
+    for (const t of liveTargets()) {
       if (t.y < P.y || Math.abs(t.x - P.x) > (t.hx || t.r) + LASER.half) continue;
       sparks(P.x, t.y - (t.hy || t.r), 0.5, 1, 0.4);
-      hit(t, LASER.dmg * P.laserDmg);
+      damage(t, LASER.dmg * P.laserDmg);
     }
   }
   const y0 = P.y + 1.6, len = H + 2 - y0, w = 1.5 + Math.sin(S.time * 60) * 0.25;
@@ -61,7 +52,7 @@ chainMesh.visible = false;
 scene.add(chainMesh);
 let chainShow = 0;
 function fireChain() {
-  const pool = targets();
+  const pool = liveTargets();
   let fx = P.x, fy = P.y, k = 0, links = 0;
   for (let i = 0; i < Math.min(CHAIN.max, 1 + P.chainJumps); i++) {
     let best = -1, bd = (i ? CHAIN.reach : CHAIN.first) ** 2;
@@ -80,7 +71,7 @@ function fireChain() {
       x = nx; y = ny;
     }
     for (let s = 0; s < 5; s++) particle(tx, ty, 0.5, rand(-8, 8), rand(-8, 8), 0, rand(0.1, 0.3), 0.8, 0.6, 1);
-    hit(t, CHAIN.dmg * P.chainDmg);
+    damage(t, CHAIN.dmg * P.chainDmg);
     fx = tx; fy = ty; links++;
   }
   if (!links) return false;
@@ -120,7 +111,7 @@ function updateOrbs(dt, on) {
     if (t && !(t.orbT > S.time)) {   // одна ціль отримує шкоду від сфер не частіше, ніж раз на ORB.gap
       t.orbT = S.time + ORB.gap;
       sparks(x, y, 1, 0.5, 0.2);
-      hit(t, P.orbDmg);
+      damage(t, P.orbDmg);
     }
   });
 }

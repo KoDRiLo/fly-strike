@@ -12,6 +12,8 @@ import { hurtPlayer } from './player.js';
 
 // ───────────────────────── Боси ─────────────────────────
 let boss = null;
+const bossModels = {}; // модель кожного боса будується один раз і використовується в наступних колах — без витоку пам'яті
+const QUICK = new Set(['summon', 'mines', 'squad']); // атаки-виклики: коротка фаза замість повної
 function clearBoss() {
   if (boss) { scene.remove(boss.holder); boss = null; }
   ui.bossbar.classList.remove('on');
@@ -240,7 +242,8 @@ const ATK = {
 function spawnBoss() {
   const loop = Math.floor(S.stage / BOSSES.length), def = BOSSES[S.stage % BOSSES.length], kind = def.model;
   const scale = Math.min(1, (W - 0.5) / 9);
-  const holder = new THREE.Group(), model = makeBoss(kind);
+  const holder = new THREE.Group(), model = bossModels[kind] ||= makeBoss(kind);
+  model.rotation.set(0, 0, 0);
   holder.add(model);
   holder.rotation.z = Math.PI;
   holder.scale.setScalar(scale);
@@ -248,7 +251,11 @@ function spawnBoss() {
   const mats = new Set(), spin = [];
   model.traverse((c) => {
     if (c.name === 'spin') spin.push(c);
-    if (c.material?.emissive) { c.material.userData.e0 = c.material.emissive.getHex(); mats.add(c.material); }
+    if (c.material?.emissive) {
+      c.material.userData.e0 ??= c.material.emissive.getHex();
+      c.material.emissive.setHex(c.material.userData.e0);   // модель могла лишитися «у спалаху» з минулого бою
+      mats.add(c.material);
+    }
   });
   const hp = bossHp(def.hp, loop, S.playT);
   boss = { def, loop, x: 0, y: H + 10, homeY: H - 8, hp, maxHp: hp, hx: def.hx * scale, hy: def.hy * scale, t: 0, state: 'enter', atk: -1, atkT: 1, resting: true, a1: 0, c: 0, sa: 0, sum: false, rage: 1, flash: 0, dieT: 0, holder, model, mats, spin };
@@ -285,7 +292,7 @@ function updateBoss(dt) {
       if (b.resting) {
         b.resting = false;
         b.atk = (b.atk + 1) % b.def.atks.length;
-        b.atkT = ['summon', 'mines', 'squad'].includes(b.def.atks[b.atk]) ? 1.5 : 4.5;
+        b.atkT = QUICK.has(b.def.atks[b.atk]) ? 1.5 : 4.5;
         b.a1 = 0.3; b.c = 0; b.sum = false;
       } else { b.resting = true; b.atkT = 1.1 / b.rage; }
     }

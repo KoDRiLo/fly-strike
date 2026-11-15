@@ -20,6 +20,7 @@ function clearAll() {
 }
 
 function startGame() {
+  audioPause(false);
   initAudio();
   clearAll();
   Object.assign(S, { mode: 'play', score: 0, shake: 0, kills: 0, playT: 0 });
@@ -28,12 +29,8 @@ function startGame() {
   music.start('stage');
   input.useTarget = false;
   playerHolder.visible = true;
-  $('menu').classList.add('hidden');
-  $('over').classList.add('hidden');
-  $('pause').classList.add('hidden');
-  $('pick').classList.add('hidden');
+  for (const id of ['menu', 'over', 'pause', 'pick', 'settings']) $(id).classList.add('hidden');
   toggleInfo(false);
-  $('settings').classList.add('hidden');
   $('hud').classList.remove('hidden');
   startStage(0);
 }

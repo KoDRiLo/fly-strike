@@ -1,4 +1,4 @@
-import { dmgMul, hpMul, threatLevel, xpForLevel } from './balance.js';
+import { BASE_MAGNET, dmgMul, hpMul, threatLevel, xpForLevel } from './balance.js';
 import { H } from './core.js';
 
 // ───────────────────────── Стан гри ─────────────────────────
@@ -13,7 +13,7 @@ const freshPlayer = () => ({
   x: 0, y: -H + 6, vx: 0, hp: 100, maxHp: 100, lives: 0, inv: 2, dead: false, respawnT: 0,
   gun: 1, missiles: 0, drones: 0, laser: 0, laserT: 0, laserOn: 0, laserTick: 0, laserDmg: 1, laserTime: 1, laserCd: 1,
   chain: 0, chainT: 0, chainDmg: 1, chainJumps: 1, chainCd: 1, orbs: 0, orbR: 1, orbDmg: 3, bombs: 0, maxBombs: 0, shock: 0, shockT: 0, shield: 0, shieldMax: 0, shieldT: 0,
-  dmg: 1, misDmg: 1, droneDmg: 1, droneGuns: 1, rate: 1, spd: 1, pierce: 0, bounce: 0, crit: 0, magnet: 7, regen: 0, luck: 0, xpMul: 1,
+  dmg: 1, misDmg: 1, droneDmg: 1, droneGuns: 1, rate: 1, spd: 1, pierce: 0, bounce: 0, crit: 0, magnet: BASE_MAGNET, regen: 0, luck: 0, xpMul: 1,
   xp: 0, level: 0, perks: {}, fireT: 0, misT: 0, droneT: 0, misSide: 1,
 });
 const P = freshPlayer();

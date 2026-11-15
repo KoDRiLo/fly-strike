@@ -1,24 +1,13 @@
 import { sfx } from './audio.js';
-import { clamp, H, rand, W } from './core.js';
+import { clamp, H, rand, turnToward, W } from './core.js';
 import { critHit, explode, missilePool, particle, sparks, sweep } from './fx.js';
-import { eBullets, enemies, missiles, P, pBullets } from './state.js';
-import { damageEnemy } from './enemies.js';
-import { boss, damageBoss } from './bosses.js';
-import { hurtPlayer, nearestTarget } from './player.js';
+import { eBullets, missiles, P, pBullets } from './state.js';
+import { hurtPlayer } from './player.js';
+import { damage, hitTest, nearestTarget } from './targets.js';
 
 // ───────────────────────── Снаряди ─────────────────────────
-function hitTest(x, y, r, skip) {
-  const b = boss;
-  if (b && b.state === 'fight' && !skip?.includes(b) && Math.abs(x - b.x) < b.hx + r && Math.abs(y - b.y) < b.hy + r) return b;
-  for (const e of enemies) {
-    if (e.dead || e.y > H + 1 || skip?.includes(e)) continue;
-    // крилаті вороги — прямокутник на весь розмах крил; круглі (міни, спінер, камікадзе) — коло
-    if (e.hx ? Math.abs(e.x - x) < e.hx + r && Math.abs(e.y - y) < e.hy + r : (e.x - x) ** 2 + (e.y - y) ** 2 < (e.r + r) ** 2) return e;
-  }
-  return null;
-}
 function applyHit(t, dmg) {
-  if (t === boss) damageBoss(dmg); else damageEnemy(t, dmg);
+  damage(t, dmg);
   if (dmg < 3) sfx.hit();
 }
 
@@ -46,9 +35,7 @@ function updateBullets(dt) {
     m.v = Math.min(36, m.v + 40 * dt);
     const t = nearestTarget(m.x, m.y);
     if (t) {
-      let d = Math.atan2(t.y - m.y, t.x - m.x) - m.a;
-      d = Math.atan2(Math.sin(d), Math.cos(d));
-      m.a += clamp(d, -6 * dt, 6 * dt);
+      m.a = turnToward(m.a, Math.atan2(t.y - m.y, t.x - m.x), 6 * dt);
     }
     m.x += Math.cos(m.a) * m.v * dt; m.y += Math.sin(m.a) * m.v * dt;
     m.m.position.set(m.x, m.y, 0);
@@ -65,11 +52,9 @@ function updateBullets(dt) {
     if (b.ay) b.vy += b.ay * dt;                       // «бумеранг»: гальмує й повертається
     if (b.home > 0 && !P.dead) {                       // самонаведення: плавно довертає на гравця
       b.home -= dt;
-      const v = Math.hypot(b.vx, b.vy), a = Math.atan2(b.vy, b.vx);
-      let d = Math.atan2(P.y - b.y, P.x - b.x) - a;
-      d = Math.atan2(Math.sin(d), Math.cos(d));
-      const na = a + clamp(d, -1.5 * dt, 1.5 * dt);
-      b.vx = Math.cos(na) * v; b.vy = Math.sin(na) * v;
+      const v = Math.hypot(b.vx, b.vy);
+      const a = turnToward(Math.atan2(b.vy, b.vx), Math.atan2(P.y - b.y, P.x - b.x), 1.5 * dt);
+      b.vx = Math.cos(a) * v; b.vy = Math.sin(a) * v;
     }
     b.x += b.vx * dt; b.y += b.vy * dt;
     if (Math.abs(b.y) > H + 2 || Math.abs(b.x) > W + 2) { b.dead = true; continue; }
@@ -82,5 +67,5 @@ function updateBullets(dt) {
 }
 
 export {
-  hitTest, updateBullets,
+  updateBullets,
 };

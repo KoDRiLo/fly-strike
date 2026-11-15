@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { makeEnemy } from './models.js';
 import { sfx } from './audio.js';
-import { clamp, H, rand, scene, TAU, W } from './core.js';
+import { clamp, H, rand, scene, TAU, turnToward, W } from './core.js';
 import { eBulletPools, explode, glowTex, particle, Pool, ring, sweep } from './fx.js';
 import { diff, eBullets, enemies, later, P, S, threatDmg } from './state.js';
 import { showMsg } from './hud.js';
@@ -25,6 +25,7 @@ const bulletSpeed = () => Math.min(16, 9.5 + S.stage * 0.7);
 const aim = (x, y) => Math.atan2(P.y - y, P.x - x);
 
 const SHOT = 12; // базова шкода ворожої кулі
+const ELITE = { hp: 4, speed: 1.3, fire: 1.3, shot: 20, ram: 40 }; // множники й шкода елітних ворогів
 const shotDmg = (elite) => (elite ? ELITE.shot : SHOT) * threatDmg();
 // dmg — шкода кулі; елітні б'ють сильніше, і їхні кулі більші
 function eShoot(x, y, ang, speed, kind = 0, dmg = shotDmg(false)) {
@@ -99,8 +100,6 @@ const WAVES = {
   gunship() {
     spawnEnemy('gunship', rand(-(W - 5), W - 5), H + 4, { dir: Math.random() < 0.5 ? -1 : 1 });
   },
-};
-Object.assign(WAVES, {
   strafers() {
     const dir = Math.random() < 0.5 ? -1 : 1, n = 3 + Math.min(2, S.stage);
     for (let i = 0; i < n; i++) later(i * 0.45, () => spawnEnemy('strafer', -dir * (W + 3), H - 4 - i * 1.6, { dir }));
@@ -123,7 +122,7 @@ Object.assign(WAVES, {
   ace() {
     spawnEnemy('ace', rand(-(W - 4), W - 4), H + 2, { homeY: rand(H - 11, H - 6) });
   },
-});
+};
 function spawnWave() {
   const t = S.stageT, late = S.stage > 0;
   if (t > 18 && !S.eliteDone) { S.eliteDone = true; spawnElite(); return; }
@@ -142,8 +141,8 @@ function spawnWave() {
   for (const [name, w] of opts) { if ((r -= w) <= 0) { WAVES[name](); return; } }
 }
 
-let quiet = false; // true — масове знищення (бомба, смерть боса): без уламків мін
-function quietly(fn) { quiet = true; try { fn(); } finally { quiet = false; } }
+let quiet = 0; // > 0 — масове знищення (бомба, смерть боса): без уламків мін; лічильник, бо виклики бувають вкладені
+function quietly(fn) { quiet++; try { fn(); } finally { quiet--; } }
 function killEnemy(e) {
   if (e.dead) return;
   e.dead = true;
@@ -162,7 +161,6 @@ function damageEnemy(e, d) {
   if (e.hp <= 0) killEnemy(e);
 }
 
-const ELITE = { hp: 4, speed: 1.3, fire: 1.3, shot: 20, ram: 40 };
 function updateEnemies(dt0) {
   const sp = bulletSpeed();
   for (const e of enemies) {
@@ -190,11 +188,7 @@ function updateEnemies(dt0) {
         eShoot(e.x - 0.6, e.y - 1, a, sp * 1.1, 0, dmg); eShoot(e.x + 0.6, e.y - 1, a, sp * 1.1, 0, dmg);
       }
     } else if (e.type === 'kami') {
-      if (e.y > P.y - 2 && !P.dead) {
-        let d = aim(e.x, e.y) - e.a;
-        d = Math.atan2(Math.sin(d), Math.cos(d));
-        e.a += clamp(d, -2.4 * dt, 2.4 * dt);
-      }
+      if (e.y > P.y - 2 && !P.dead) e.a = turnToward(e.a, aim(e.x, e.y), 2.4 * dt);
       const v = Math.min(26, 9 + e.t * 6);
       e.x += Math.cos(e.a) * v * dt;
       e.y += Math.sin(e.a) * v * dt;

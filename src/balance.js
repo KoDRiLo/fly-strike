@@ -10,6 +10,10 @@ export const xpForLevel = (level) => 12 + 8 * level;
 // Міцність боса: базова × коло проходження × час забігу.
 export const bossHp = (base, loop, playT) => Math.round(base * (1 + 0.6 * loop) * (1 + playT / 400));
 
+// Базовий радіус притягування зірок і час відновлення одного заряду щита, с.
+export const BASE_MAGNET = 7;
+export const SHIELD_RECHARGE = 20;
+
 // Рідкість зірки 0..3 (зелена → синя → фіолетова → золота) для випадкового r з [0, 1).
 export function starRarity(luck, boost, r) {
   const k = 1 + luck * 0.6 + boost;

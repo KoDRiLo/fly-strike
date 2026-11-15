@@ -10,7 +10,7 @@ export default [
     rules: { 'no-empty': ['error', { allowEmptyCatch: true }] },
   },
   {
-    files: ['test/**/*.js', 'eslint.config.js'],
+    files: ['test/**/*.js', 'tools/**/*.mjs', 'eslint.config.js'],
     languageOptions: { ecmaVersion: 'latest', sourceType: 'module', globals: globals.node },
   },
 ];

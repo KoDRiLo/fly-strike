@@ -1,4 +1,4 @@
-import { initAudio, sfx } from './audio.js';
+import { audioPause, initAudio, sfx } from './audio.js';
 import { $, camera, canvas, clamp, H, rand, renderer, scene, updateBackground, W, world } from './core.js';
 import { updateWeapons } from './weapons.js';
 import { sweep, updateParticles, updateRings } from './fx.js';
@@ -8,21 +8,15 @@ import { spawnElite, spawnEnemy, updateEnemies, WAVES } from './enemies.js';
 import { ATK, boss, BOSSES, spawnBoss, updateBoss } from './bosses.js';
 import { dropStars, gainXp, updatePickups } from './pickups.js';
 import { hurtPlayer, input, playerFlame, playerHolder, playerModel, shieldMesh, shockPlayer, updatePlayer, useBomb } from './player.js';
+import { PERKS } from './perks.js';
 import { updateBullets } from './bullets.js';
 import { startStage, updateStage } from './stage.js';
 import { choosePerk, openPick, pickQueue, toggleInfo } from './perkui.js';
-import { applyCfg, cfg, preview, toggleSettings } from './settings.js';
-import { startGame, togglePause } from './game.js';
+import { preview, toggleSettings, toggleSound } from './settings.js';
+import { gameOver, startGame, togglePause } from './game.js';
 
 // ───────────────────────── Керування ─────────────────────────
 window.addEventListener('pointerdown', initAudio);
-// Вимикає або вмикає весь звук одразу (клавіша M і кнопка в HUD).
-function toggleSound() {
-  const on = !(cfg.musOn || cfg.sfxOn);
-  cfg.musOn = cfg.sfxOn = on;
-  applyCfg();
-  showMsg(on ? 'ЗВУК УВІМК.' : 'ЗВУК ВИМК.', 0.8, 'sm');
-}
 window.addEventListener('keydown', (e) => {
   if (e.code.startsWith('Arrow') || e.code === 'Space') e.preventDefault();
   if (e.repeat) return;
@@ -39,6 +33,11 @@ window.addEventListener('keydown', (e) => {
 });
 window.addEventListener('keyup', (e) => input.keys.delete(e.code));
 window.addEventListener('blur', () => { input.keys.clear(); if (S.mode === 'play') togglePause(); });
+// Прихована вкладка (типово на телефоні): гра стає на паузу, а звук мовчить у будь-якому режимі.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { if (S.mode === 'play') togglePause(); else audioPause(true); }
+  else if (S.mode !== 'pause') audioPause(false);
+});
 
 canvas.addEventListener('pointerdown', (e) => {
   if (e.pointerType === 'mouse') { if (e.button === 2) useBomb(); return; }
@@ -64,7 +63,7 @@ $('bombBtn').addEventListener('pointerdown', (e) => { e.preventDefault(); useBom
 $('startBtn').addEventListener('click', startGame);
 $('againBtn').addEventListener('click', startGame);
 $('resumeBtn').addEventListener('click', togglePause);
-$('pauseBtn').addEventListener('click', togglePause);
+$('pauseBtn').addEventListener('click', (e) => { togglePause(); e.currentTarget.blur(); });
 $('muteBtn').addEventListener('click', (e) => { toggleSound(); e.currentTarget.blur(); });
 $('cards').addEventListener('click', (e) => { const c = e.target.closest('.card'); if (c) choosePerk(+c.dataset.i); });
 
@@ -123,4 +122,4 @@ function frame(now) {
 requestAnimationFrame(frame);
 
 // Для налагодження з консолі
-if (DEBUG) window.__game = { S, P, enemies, pickups, pickQueue, hurtPlayer, shockPlayer, spawnEnemy, spawnElite, WAVES, dropStars, gainXp, choosePerk, get boss() { return boss; }, spawnBoss, startStage, world, ATK, BOSSES, pBullets };
+if (DEBUG) window.__game = { S, P, enemies, pickups, pickQueue, hurtPlayer, shockPlayer, spawnEnemy, spawnElite, WAVES, dropStars, gainXp, choosePerk, get boss() { return boss; }, spawnBoss, startStage, world, ATK, BOSSES, PERKS, pBullets, startGame, gameOver };
