@@ -1,5 +1,6 @@
 import { initAudio, sfx } from './audio.js';
 import { $, camera, canvas, clamp, H, rand, renderer, scene, updateBackground, W, world } from './core.js';
+import { updateWeapons } from './weapons.js';
 import { sweep, updateParticles, updateRings } from './fx.js';
 import { enemies, hi, P, pBullets, pickups, queue, S, threat } from './state.js';
 import { showMsg, ui, updateHud } from './hud.js';
@@ -99,6 +100,7 @@ function frame(now) {
     sweep(queue, () => {});
     updateStage(dt);
     updatePlayer(dt);
+    updateWeapons(dt);
     updateEnemies(dt);
     updateBoss(dt);
     updateBullets(dt);

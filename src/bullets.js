@@ -82,5 +82,5 @@ function updateBullets(dt) {
 }
 
 export {
-  updateBullets,
+  hitTest, updateBullets,
 };

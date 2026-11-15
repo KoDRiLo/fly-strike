@@ -16,7 +16,7 @@ function openPick() {
   $('cards').innerHTML = pickChoices.map((p, i) => {
     const lvl = P.perks[p.id] || 0;
     const pips = p.max > 20 ? '' : '●'.repeat(lvl) + '◉' + '○'.repeat(p.max - lvl - 1);
-    return `<button class="card ${p.cat}${p.rare ? ' rare' : ''}" data-i="${i}"><em>${p.rare ? 'РІДКІСНИЙ' : CATS[p.cat]}</em><span class="ico">${p.icon}</span><b>${p.name}</b>` +
+    return `<button class="card ${p.cat}${p.rare ? ' rare' : p.mid ? ' mid' : ''}" data-i="${i}"><em>${p.rare ? 'РІДКІСНИЙ' : p.mid ? 'НЕЗВИЧАЙНИЙ' : CATS[p.cat]}</em><span class="ico">${p.icon}</span><b>${p.name}</b>` +
       `<span class="desc">${p.desc}</span><span class="pips">${pips}</span><kbd>${i + 1}</kbd></button>`;
   }).join('');
   S.mode = 'pick';
@@ -42,7 +42,7 @@ function choosePerk(i) {
 // Довідка: список усіх перків, згенерований з PERKS.
 $('infoList').innerHTML = Object.keys(CATS).map((cat) =>
   `<h3 class="${cat}">${CATS[cat]}</h3>` + PERKS.filter((p) => p.cat === cat).map((p) =>
-    `<div class="row ${cat}${p.rare ? ' rare' : ''}"><span class="ico">${p.icon}</span><div><b>${p.name}</b>${p.rare ? '<em>рідкісний</em>' : ''}<br>${p.desc}</div>` +
+    `<div class="row ${cat}${p.rare ? ' rare' : p.mid ? ' mid' : ''}"><span class="ico">${p.icon}</span><div><b>${p.name}</b>${p.rare ? '<em>рідкісний</em>' : p.mid ? '<em>незвичайний</em>' : ''}<br>${p.desc}</div>` +
     `<small>${p.max > 20 ? 'без ліміту' : 'до ' + p.max}</small></div>`).join('')).join('');
 const toggleInfo = (show) => $('info').classList.toggle('hidden', !show);
 $('infoBtn').addEventListener('click', () => toggleInfo(true));

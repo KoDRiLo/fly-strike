@@ -37,6 +37,7 @@ npm test           # тести чистої логіки (node --test)
 │   ├── bosses.js         боси та їхні атаки
 │   ├── pickups.js        зірки досвіду, рівні
 │   ├── player.js         літак, дрони, зброя, бомба, ураження струмом
+│   ├── weapons.js        додаткова зброя з перків: лазер, ланцюгова блискавка, вогняні сфери
 │   ├── bullets.js        рух і влучання куль та ракет
 │   ├── stage.js          фази етапу: хвилі → попередження → бос → нагорода
 │   ├── perks.js          список перків і вибір трьох (чистий модуль)
@@ -87,6 +88,7 @@ npm test           # тести чистої логіки (node --test)
 | `bosses.js` | `BOSSES`, атаки `ATK`, `spawnBoss()`, `damageBoss()`, `updateBoss()`, поточний `boss` |
 | `pickups.js` | `STARS` (рідкості), `dropStars()`, `gainXp()`, `updatePickups()` |
 | `player.js` | `input`, `SPEED`, `hurtPlayer()`, `shockPlayer()`, `GUN`, `useBomb()`, `updatePlayer()`, моделі літака й дронів |
+| `weapons.js` | `updateWeapons()`: лазер (`LASER`), ланцюгова блискавка (`CHAIN`), вогняні сфери (`ORB`) — параметри в однойменних таблицях |
 | `bullets.js` | `hitTest()`, `updateBullets()` |
 | `stage.js` | `updateStage()` (фази `waves` → `warn` → `boss` → `clear` → `reward`), `startStage()` |
 | `perks.js` | `PERKS`, `CATS`, `rollPerks(P)` |
@@ -99,7 +101,8 @@ npm test           # тести чистої логіки (node --test)
 
 Типові зміни:
 
-- **Новий перк** — додати об'єкт у `PERKS` (`perks.js`): `id`, `cat` (`atk` / `def` / `util`), `icon`, `name`, `desc`, `max`, `apply(P)`; необов'язково `ok(P)` (умова появи), `w` (вага), `rare`. Гравець передається аргументом — модуль лишається чистим. Довідник і картки будуються з цього масиву; тести в `test/perks.test.js` перевіряють кожен перк.
+- **Новий перк** — додати об'єкт у `PERKS` (`perks.js`): `id`, `cat` (`atk` / `def` / `util`), `icon`, `name`, `desc`, `max`, `apply(P)`; необов'язково `ok(P)` (умова появи), `w` (вага), `rare` (рідкісний, золотий) або `mid` (незвичайний, фіолетовий; вага `MID`). Гравець передається аргументом — модуль лишається чистим. Довідник і картки будуються з цього масиву; тести в `test/perks.test.js` перевіряють кожен перк.
+- **Нова додаткова зброя** — поля у `freshPlayer()` (`state.js`), базовий перк середньої рідкості (`max: 1`) і покращення з `ok(P)` у `PERKS`, логіка й візуал у `weapons.js` (функція `update…(dt, on)`, виклик з `updateWeapons()`).
 - **Новий ворог** — модель у `BUILD` (`models.js`), характеристики в `DEF`, поведінка в `updateEnemies()`, поява у `WAVES` (усе в `enemies.js`).
 - **Новий бос або атака** — `BOSSES` і `ATK` у `bosses.js`, модель у `makeBoss()` (`models.js`). У кожного боса щонайменше три атаки, і жодна атака не повторюється в іншого боса.
 - **Баланс** — формули в `balance.js`, `STAGE_LEN` у `state.js`, `ELITE` і `DEF` в `enemies.js`.
