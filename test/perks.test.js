@@ -30,10 +30,25 @@ test('кожен перк щось змінює в гравцеві', () => {
   }
 });
 
-test('«Форсаж» збільшує швидкість на 15%', () => {
-  const P = player();
-  PERKS.find((p) => p.id === 'spd').apply(P);
-  assert.ok(Math.abs(P.spd - 1.15) < 1e-9);
+const perk = (id) => PERKS.find((p) => p.id === id);
+const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, a + ' ≠ ' + b);
+
+test('баланс: прирости перків', () => {
+  const P = player({ hp: 40 });
+  perk('spd').apply(P); near(P.spd, 1.05);
+  perk('rate').apply(P); near(P.rate, 1.05);
+  perk('crit').apply(P); near(P.crit, 0.01);
+  perk('magnet').apply(P); near(P.magnet, 7.7);
+  perk('magnet').apply(P); near(P.magnet, 8.4);
+  perk('hp').apply(P);
+  assert.equal(P.maxHp, 125);
+  assert.equal(P.hp, 65, 'броня додає стільки ж міцності, але не ремонтує повністю');
+});
+
+test('баланс: ліміти перків', () => {
+  assert.equal(perk('life').max, 2);
+  assert.equal(perk('bounce').max, 1);
+  for (const id of ['spd', 'crit', 'rate', 'magnet']) assert.ok(perk(id).max > 20, id + ' без ліміту');
 });
 
 test('rollPerks дає три різні перки', () => {
@@ -45,10 +60,10 @@ test('rollPerks дає три різні перки', () => {
 });
 
 test('rollPerks не пропонує перки на максимумі чи з невиконаною умовою', () => {
-  const P = player({ perks: { gun: 4, spd: 4 } });   // немає ракет і дронів, міцність повна
+  const P = player({ perks: { gun: 4, bounce: 1 } });   // немає ракет і дронів, міцність повна
   for (let i = 0; i < 300; i++) {
     for (const p of rollPerks(P)) {
-      assert.ok(!['gun', 'spd'].includes(p.id), 'на максимумі: ' + p.id);
+      assert.ok(!['gun', 'bounce'].includes(p.id), 'на максимумі: ' + p.id);
       assert.ok(!['misdmg', 'dronedmg', 'dronegun', 'repair'].includes(p.id), 'умова не виконана: ' + p.id);
     }
   }

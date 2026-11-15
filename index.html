@@ -86,7 +86,12 @@
   .sw:hover { transform: scale(1.12); }
   .sw.on { border-color: #fff; box-shadow: 0 0 0 2px #04101f, 0 0 0 4px #fff; }
   #info { justify-content: flex-start; background: #04101f; gap: 12px; }
-  #infoList { flex: 1; min-height: 0; overflow-y: auto; width: 100%; max-width: 460px; text-align: left; padding-right: 6px; }
+  #infoList { flex: 1; min-height: 0; overflow-y: auto; width: 100%; max-width: 460px; text-align: left; padding-right: 16px; scrollbar-width: thin; scrollbar-color: #ffd24a99 #ffffff0d; }
+  @supports not (scrollbar-width: thin) {   /* старі Safari */
+    #infoList::-webkit-scrollbar { width: 6px; }
+    #infoList::-webkit-scrollbar-track { background: #ffffff0d; border-radius: 3px; }
+    #infoList::-webkit-scrollbar-thumb { background: #ffd24a99; border-radius: 3px; }
+  }
   #infoList h3 { font-size: 12px; letter-spacing: 3px; margin: 14px 0 6px; color: var(--c); }
   #infoList .atk { --c: #ff7a4a; } #infoList .def { --c: #4fb4ff; } #infoList .util { --c: #6fe08a; } #infoList .rare { --c: #ffd24a; }
   .row { display: grid; grid-template-columns: 38px 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; margin-bottom: 5px; font-size: 13px; line-height: 1.35; background: #ffffff0d; border-left: 3px solid var(--c); border-radius: 8px; }

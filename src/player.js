@@ -1,3 +1,4 @@
+import { SHIELD_RECHARGE } from './perks.js';
 import * as THREE from 'three';
 import { makeDrone, makePlayer } from './models.js';
 import { sfx } from './audio.js';
@@ -33,7 +34,7 @@ const SPEED = 27; // базова швидкість літака, світов�
 function hurtPlayer(dmg) {
   if (P.inv > 0 || P.dead) return false;
   if (P.shield > 0) {
-    if (P.shield-- === P.shieldMax) P.shieldT = 12;
+    if (P.shield-- === P.shieldMax) P.shieldT = SHIELD_RECHARGE;
     P.inv = 0.4;
     ring(P.x, P.y, 5, 0.3, 0x4fd8ff);
     sfx.hit();
@@ -176,7 +177,7 @@ function updatePlayer(dt) {
   P.vx += (vx - P.vx) * Math.min(1, 10 * dt);
   P.inv -= dt;
   if (P.regen) P.hp = Math.min(P.maxHp, P.hp + P.regen * dt);
-  if (P.shield < P.shieldMax && (P.shieldT -= dt) <= 0) { P.shield++; P.shieldT = 12; ring(P.x, P.y, 4, 0.3, 0x4fd8ff); }
+  if (P.shield < P.shieldMax && (P.shieldT -= dt) <= 0) { P.shield++; P.shieldT = SHIELD_RECHARGE; ring(P.x, P.y, 4, 0.3, 0x4fd8ff); }
 
   if ((P.fireT -= dt) <= 0) {
     P.fireT = (P.gun >= 4 ? 0.1 : 0.12) / P.rate;
