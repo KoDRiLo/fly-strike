@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Небесний Шторм</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #05080f; overflow: hidden; font-family: 'Segoe UI', system-ui, sans-serif; color: #fff; user-select: none; -webkit-user-select: none; }
+  #game { position: relative; height: 100vh; height: 100dvh; width: min(100vw, 80vh); margin: 0 auto; overflow: hidden; box-shadow: 0 0 60px #000; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+  #fps { position: absolute; top: 3px; left: 6px; z-index: 10; font: 700 11px ui-monospace, monospace; color: #7dff8f; text-shadow: 0 1px 2px #000; pointer-events: none; }
+  #hud { position: absolute; inset: 0; pointer-events: none; text-shadow: 0 2px 4px #000a; }
+  .top { display: flex; justify-content: space-between; align-items: flex-start; padding: 16px 14px 10px; font-weight: 700; }
+  #score { font-size: 26px; letter-spacing: 1px; }
+  #hi { display: block; font-size: 12px; opacity: .7; font-weight: 500; }
+  #stage { font-size: 15px; opacity: .9; padding-top: 6px; }
+  #bossbar { position: absolute; top: 58px; left: 8%; right: 8%; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: 2px; opacity: 0; transition: opacity .4s; }
+  #bossbar.on { opacity: 1; }
+  .bar { height: 10px; background: #0008; border: 1px solid #fff5; border-radius: 6px; overflow: hidden; margin-top: 4px; }
+  .bar i { display: block; height: 100%; width: 100%; transition: width .12s; }
+  #bosshp { background: linear-gradient(90deg, #ff3d3d, #ff9a3d); }
+  .bottom { position: absolute; left: 14px; bottom: 12px; width: 46%; max-width: 230px; font-size: 13px; font-weight: 600; }
+  #hp { background: linear-gradient(90deg, #35d07f, #b6f25c); }
+  #hp.shock { background: linear-gradient(90deg, #2f8cff, #a8e4ff); }
+  #lives { font-size: 17px; letter-spacing: 3px; min-height: 22px; }
+  #weap { margin-top: 5px; opacity: .9; font-size: 12px; }
+  #bombBtn { position: absolute; right: 14px; bottom: 14px; pointer-events: auto; width: 68px; height: 68px; border-radius: 50%; border: 2px solid #fff8; background: #d2452dcc; color: #fff; font-size: 20px; font-weight: 700; cursor: pointer; }
+  #bombBtn:active { transform: scale(.92); }
+  #bombBtn small { display: block; font-size: 10px; opacity: .8; font-weight: 500; }
+  #msg { position: absolute; top: 34%; left: 0; right: 0; text-align: center; font-size: 34px; font-weight: 800; letter-spacing: 3px; opacity: 0; transition: opacity .3s; }
+  #msg.on { opacity: 1; }
+  #msg.sm { font-size: 18px; top: 64%; letter-spacing: 2px; color: #ffe27a; }
+  #msg.warn { color: #ff4a3d; animation: blink .5s infinite; }
+  @keyframes blink { 50% { opacity: .25; } }
+  #flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+  .overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 20px; text-align: center; background: linear-gradient(#04101fbb, #04101fee); }
+  .hidden { display: none !important; }
+  h1 { font-size: clamp(30px, 8vh, 54px); line-height: 1; letter-spacing: 4px; font-weight: 900; background: linear-gradient(#fff, #ffd24a 60%, #ff7a2f); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 4px 0 #0008); }
+  h2 { font-size: 30px; letter-spacing: 3px; }
+  .btn { pointer-events: auto; padding: 14px 44px; font-size: 20px; font-weight: 800; letter-spacing: 2px; color: #1a1200; background: linear-gradient(#ffe27a, #ffb52f); border: 0; border-radius: 40px; cursor: pointer; box-shadow: 0 5px 0 #a96a00, 0 10px 24px #0008; }
+  .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #a96a00; }
+  .help { font-size: 13px; line-height: 1.7; opacity: .9; max-width: 380px; }
+  .help b { color: #ffd24a; }
+  .legend { display: grid; grid-template-columns: repeat(3, auto); gap: 6px 16px; font-size: 13px; text-align: left; }
+  .legend span { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font-weight: 800; margin-right: 6px; border: 2px solid #fff; font-size: 12px; }
+  #pick { justify-content: center; padding: 16px 10px; }
+  #pickTitle { font-size: clamp(20px, 4.5vh, 30px); color: #ffd24a; }
+  #pick p { font-size: 13px; opacity: .75; }
+  #cards { display: flex; gap: 10px; width: 100%; justify-content: center; align-items: stretch; }
+  .card { --c: #ffd24a; position: relative; flex: 1 1 0; min-width: 0; max-width: 190px; min-height: min(300px, 46vh); display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 8px 12px; text-align: center; color: #fff; font: inherit; background: linear-gradient(180deg, color-mix(in srgb, var(--c) 30%, #0b1626), #0b1626 62%); border: 2px solid var(--c); border-radius: 16px; cursor: pointer; box-shadow: 0 8px 24px #000a; transition: transform .14s, box-shadow .14s; animation: deal .4s backwards; }
+  .card:nth-child(2) { animation-delay: .09s; }
+  .card:nth-child(3) { animation-delay: .18s; }
+  @keyframes deal { from { opacity: 0; transform: translateY(40px) scale(.85) rotate(-4deg); } }
+  .card:hover, .card:focus-visible { transform: translateY(-10px) scale(1.05); box-shadow: 0 14px 34px color-mix(in srgb, var(--c) 55%, transparent); outline: none; }
+  .card.atk { --c: #ff7a4a; } .card.def { --c: #4fb4ff; } .card.util { --c: #6fe08a; }
+  .card em { font-style: normal; font-size: 10px; font-weight: 800; letter-spacing: 2px; color: var(--c); }
+  .card .ico { font-size: clamp(34px, 7vh, 52px); line-height: 1.2; filter: drop-shadow(0 4px 6px #0008); }
+  .card b { font-size: clamp(13px, 2.2vh, 16px); line-height: 1.15; }
+  .card .desc { font-size: clamp(11px, 1.8vh, 13px); opacity: .88; line-height: 1.35; }
+  .card .pips { margin-top: auto; font-size: 11px; letter-spacing: 2px; color: var(--c); }
+  .card kbd { font: 700 11px system-ui; opacity: .55; border: 1px solid #fff8; border-radius: 4px; padding: 1px 7px; }
+  .card.rare { --c: #ffd24a; box-shadow: 0 0 26px #ffd24a88; }
+  .overlay .btn { width: 300px; max-width: 100%; padding-left: 0; padding-right: 0; }
+  .btn.ghost { background: #0b1626cc; color: #ffd24a; box-shadow: inset 0 0 0 2px #ffd24a, 0 5px 0 #5c4a12, 0 10px 24px #0008; }
+  .btn.ghost:active { box-shadow: inset 0 0 0 2px #ffd24a, 0 2px 0 #5c4a12; }
+  #menu { gap: 12px; }
+  .set { display: grid; grid-template-columns: auto 1fr 52px; gap: 8px 14px; align-items: center; width: 100%; max-width: 380px; padding: 16px 18px; text-align: left; font-size: 16px; font-weight: 700; background: #ffffff0d; border-radius: 12px; }
+  .set label { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .set input[type=checkbox] { width: 22px; height: 22px; accent-color: #ffd24a; cursor: pointer; }
+  .set input[type=range] { width: 100%; accent-color: #ffd24a; cursor: pointer; }
+  .set input:disabled { opacity: .35; }
+  .set output { font-size: 13px; opacity: .8; text-align: right; }
+  #settings { background: #04101f; }
+  .set.colors { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .set.colors b { color: #ffd24a; }
+  #preview { width: 300px; max-width: 100%; aspect-ratio: 300 / 190; height: auto; cursor: default; background: radial-gradient(#1c6fb0, #0d3a66); border-radius: 10px; }
+  .swatches { display: flex; gap: 8px; }
+  .sw { flex: 0 0 30px; width: 30px; height: 30px; border-radius: 50%; border: 3px solid #0006; cursor: pointer; padding: 0; transition: transform .1s; }
+  .sw:hover { transform: scale(1.12); }
+  .sw.on { border-color: #fff; box-shadow: 0 0 0 2px #04101f, 0 0 0 4px #fff; }
+  #info { justify-content: flex-start; background: #04101f; gap: 12px; }
+  #infoList { flex: 1; min-height: 0; overflow-y: auto; width: 100%; max-width: 460px; text-align: left; padding-right: 6px; }
+  #infoList h3 { font-size: 12px; letter-spacing: 3px; margin: 14px 0 6px; color: var(--c); }
+  #infoList .atk { --c: #ff7a4a; } #infoList .def { --c: #4fb4ff; } #infoList .util { --c: #6fe08a; } #infoList .rare { --c: #ffd24a; }
+  .row { display: grid; grid-template-columns: 38px 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; margin-bottom: 5px; font-size: 13px; line-height: 1.35; background: #ffffff0d; border-left: 3px solid var(--c); border-radius: 8px; }
+  .row .ico { font-size: 26px; text-align: center; }
+  .row b { font-size: 14px; }
+  .row em { font-style: normal; font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #ffd24a; margin-left: 8px; }
+  .row small { opacity: .6; font-size: 11px; white-space: nowrap; }
+  .xp { height: 6px; margin-top: 4px; }
+  #xp { background: linear-gradient(90deg, #5bb8ff, #d08bff); width: 0; }
+  .legend i { font-style: normal; font-size: 18px; margin-right: 4px; -webkit-text-stroke: 1px #000a; }
+  #final { font-size: 18px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="c"></canvas>
+  <div id="fps"></div>
+  <div id="hud" class="hidden">
+    <div class="top">
+      <div><span id="score">0</span><small id="hi"></small></div>
+      <div id="stage"></div>
+    </div>
+    <div id="bossbar"><div id="bossname"></div><div class="bar"><i id="bosshp"></i></div></div>
+    <div class="bottom">
+      <div id="lives"></div>
+      <div class="bar"><i id="hp"></i></div>
+      <div class="bar xp"><i id="xp"></i></div>
+      <div id="weap"></div>
+    </div>
+    <button id="bombBtn">💣<span id="bombs">3</span><small>пробіл</small></button>
+    <div id="msg"></div>
+  </div>
+  <div id="flash"></div>
+
+  <div id="menu" class="overlay">
+    <h1>НЕБЕСНИЙ<br>ШТОРМ</h1>
+    <div class="help">
+      <b>Миша / палець</b> або <b>WASD / стрілки</b> — політ<br>
+      Вогонь автоматичний · <b>Пробіл / ПКМ</b> — бомба (перк)<br>
+      <b>P</b> — пауза · <b>M</b> — звук
+    </div>
+    <div class="help">Збирай <b>зірки</b> з ворогів — це досвід.<br>Новий рівень або бос = вибір <b>перка</b>.</div>
+    <div class="legend" style="grid-template-columns: repeat(4, auto)">
+      <div><i style="color:#7dff8f">★</i>1</div>
+      <div><i style="color:#5bb8ff">★</i>3</div>
+      <div><i style="color:#d08bff">★</i>8</div>
+      <div><i style="color:#ffd24a">★</i>20</div>
+    </div>
+    <button class="btn" id="startBtn">ГРАТИ</button>
+    <button class="btn ghost" id="infoBtn">ІНФО</button>
+    <button class="btn ghost" id="setBtn">НАЛАШТУВАННЯ</button>
+  </div>
+
+  <div id="pause" class="overlay hidden">
+    <h2>ПАУЗА</h2>
+    <button class="btn" id="resumeBtn">ПРОДОВЖИТИ</button>
+    <button class="btn ghost" id="infoBtn2">ІНФО</button>
+    <button class="btn ghost" id="setBtn2">НАЛАШТУВАННЯ</button>
+  </div>
+
+  <div id="pick" class="overlay hidden">
+    <h2 id="pickTitle">ОБЕРИ ПЕРК</h2>
+    <div id="cards"></div>
+    <p>обери один перк · клавіші 1 / 2 / 3</p>
+  </div>
+
+  <div id="info" class="overlay hidden">
+    <h2>ПЕРКИ</h2>
+    <div class="help">Перк дають за новий рівень і за боса.<br>Праворуч — максимальний рівень перка.</div>
+    <div id="infoList"></div>
+    <button class="btn" id="infoBack">НАЗАД</button>
+  </div>
+
+  <div id="settings" class="overlay hidden">
+    <h2>НАЛАШТУВАННЯ</h2>
+    <div class="set">
+      <label><input type="checkbox" id="musOn"> Музика</label>
+      <input type="range" id="musVol" min="0" max="100" step="5">
+      <output id="musVal"></output>
+      <label><input type="checkbox" id="sfxOn"> Ефекти</label>
+      <input type="range" id="sfxVol" min="0" max="100" step="5">
+      <output id="sfxVal"></output>
+    </div>
+    <div class="help"><b>M</b> — швидко вимкнути або ввімкнути весь звук</div>
+    <div class="set colors">
+      <span>Колір літака і дронів: <b id="colName"></b></span>
+      <canvas id="preview"></canvas>
+      <div class="swatches" id="heroCol"></div>
+    </div>
+    <button class="btn" id="setBack">НАЗАД</button>
+  </div>
+
+  <div id="over" class="overlay hidden">
+    <h2>ЛІТАК ЗБИТО</h2>
+    <div id="final"></div>
+    <button class="btn" id="againBtn">ЩЕ РАЗ</button>
+  </div>
+</div>
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
